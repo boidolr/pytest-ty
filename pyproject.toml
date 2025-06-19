@@ -35,6 +35,9 @@ Repository = "https://github.com/boidolr/pytest-ty"
 [project.entry-points.pytest11]
 ty = "pytest_ty.plugin"
 
+[tool.pytest.ini_options]
+filterwarnings = ["error"]
+
 [tool.ruff]
 line-length = 120
 fix = true

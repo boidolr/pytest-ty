@@ -13,7 +13,7 @@ _MTIMES_STASH_KEY = StashKey[dict[str, float]]()
 
 def pytest_addoption(parser):
     group = parser.getgroup("ty")
-    group.addoption("--ty", action="store_true", help="enable checking with ty")
+    group.addoption("--ty", action="store_true", help="enable type checking with ty")
 
 
 def pytest_configure(config):
@@ -27,7 +27,7 @@ def pytest_configure(config):
 
 def pytest_collect_file(file_path, parent):
     config = parent.config
-    if not config.option.ty or  file_path.suffix != ".py":
+    if not config.option.ty or file_path.suffix != ".py":
         return None
 
     return TyFile.from_parent(parent, path=file_path)
@@ -86,8 +86,8 @@ class TyItem(Item):
             path,
             "--output-format=full",
         ]
-        child = Popen(command, stdout=PIPE, stderr=PIPE)
-        stdout, stderr = child.communicate()
+        child = Popen(command, stdout=PIPE, stderr=PIPE)  # noqa: S603
+        stdout, _ = child.communicate()
 
         if child.returncode != 0:
             raise TyError(stdout.decode())

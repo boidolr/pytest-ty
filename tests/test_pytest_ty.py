@@ -1,64 +1,59 @@
-def test_bar_fixture(pytester):
-    """Make sure that pytest accepts our fixture."""
+from unittest import mock
 
-    # create a temporary pytest test module
+from pytest_ty.plugin import set_stash
+
+
+def test_no_ty_run_if_disabled(pytester):
+    """Make sure that `ty` does not run if plugin is disabled."""
+
     pytester.makepyfile("""
-        def test_sth(bar):
-            assert bar == "europython2015"
+        def test_sth() -> None:
+            assert True
+    """)
+    set_stash_mock = mock.MagicMock(spec=set_stash)
+    mock.patch("pytest_ty.set_stash", set_stash_mock)
+
+    result = pytester.runpytest("-p no:ty", "-v")
+
+    set_stash_mock.assert_not_called()
+    assert result.ret == 0
+
+
+def test_ty_checking_passes(pytester):
+    """Make sure that `ty` runs on code."""
+
+    pytester.makepyfile("""
+        from pytest import mark
+
+        @mark.parametrize("bar", ["test_value"])
+        def test_sth(bar: str) -> None:
+            assert bar == "test_value"
     """)
 
-    # run pytest with the following cmd args
-    result = pytester.runpytest("--foo=europython2015", "-v")
+    result = pytester.runpytest("--ty", "-v")
 
-    # fnmatch_lines does an assertion internally
-    result.stdout.fnmatch_lines(
-        [
-            "*::test_sth PASSED*",
-        ]
-    )
-
-    # make sure that we get a '0' exit code for the testsuite
+    result.stdout.fnmatch_lines(["*::ty PASSED*"])
     assert result.ret == 0
+
+
+def test_ty_checking_fails(pytester):
+    """Make sure that `ty` runs on code and detects issues."""
+
+    pytester.makepyfile("""
+        from pytest import mark
+
+        @mark.parametrize("bar", ["test_value"])
+        def test_sth(bar: str) -> str:
+            assert bar == "test_value"
+    """)
+
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*::ty FAILED*"])
+    assert result.ret == 1
 
 
 def test_help_message(pytester):
-    result = pytester.runpytest(
-        "--help",
-    )
-    # fnmatch_lines does an assertion internally
-    result.stdout.fnmatch_lines(
-        [
-            "ty:",
-            '*--foo=DEST_FOO*Set the value for the fixture "bar".',
-        ]
-    )
+    result = pytester.runpytest("--help")
 
-
-def test_hello_ini_setting(pytester):
-    pytester.makeini("""
-        [pytest]
-        HELLO = world
-    """)
-
-    pytester.makepyfile("""
-        import pytest
-
-        @pytest.fixture
-        def hello(request):
-            return request.config.getini('HELLO')
-
-        def test_hello_world(hello):
-            assert hello == 'world'
-    """)
-
-    result = pytester.runpytest("-v")
-
-    # fnmatch_lines does an assertion internally
-    result.stdout.fnmatch_lines(
-        [
-            "*::test_hello_world PASSED*",
-        ]
-    )
-
-    # make sure that we get a '0' exit code for the testsuite
-    assert result.ret == 0
+    result.stdout.fnmatch_lines(["ty:", "*--ty*enable type checking with ty"])
