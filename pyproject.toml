@@ -14,7 +14,8 @@ authors = [
 maintainers = [
     { name = "Raphael Boidol", email = "boidolr@users.noreply.github.com" },
 ]
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
     "Framework :: Pytest",
     "Development Status :: 4 - Beta",
@@ -25,7 +26,6 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
-    "License :: OSI Approved :: MIT License",
 ]
 dependencies = ["pytest>=7.0.0", "ty"]
 
