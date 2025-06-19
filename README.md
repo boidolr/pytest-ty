@@ -1,4 +1,4 @@
-pytest-ty [![Build Status](https://github.com/boidolr/pytest-ty/actions/workflows/main.yml/badge.svg)](https://github.com/boidolr/pytest-ty/actions/workflows/main.yml "See Build Status on GitHub Actions")
+pytest-ty [![Build Status](https://github.com/boidolr/pytest-ty/actions/workflows/main.yaml/badge.svg)](https://github.com/boidolr/pytest-ty/actions/workflows/main.yaml "See Build Status on GitHub Actions")
 =========
 
 A [`pytest`](https://github.com/pytest-dev/pytest) plugin to run the [`ty`](https://github.com/astral-sh/ty) type checker
