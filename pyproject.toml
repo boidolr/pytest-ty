@@ -36,7 +36,11 @@ Repository = "https://github.com/boidolr/pytest-ty"
 ty = "pytest_ty.plugin"
 
 [tool.pytest.ini_options]
+addopts = "--cov pytest_ty"
 filterwarnings = ["error"]
+
+[tool.coverage.run]
+disable_warnings = ["module-not-measured"]
 
 [tool.ruff]
 line-length = 120
