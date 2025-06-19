@@ -1,6 +1,10 @@
-from subprocess import Popen, PIPE
+from subprocess import PIPE
+from subprocess import Popen
 
-from pytest import StashKey, File, Item, skip
+from pytest import File
+from pytest import Item
+from pytest import skip
+from pytest import StashKey
 from ty.__main__ import find_ty_bin
 
 HISTKEY = "ty/mtimes"
@@ -24,7 +28,7 @@ def pytest_configure(config):
 def pytest_collect_file(file_path, parent):
     config = parent.config
     if not config.option.ty or  file_path.suffix != ".py":
-        return
+        return None
 
     return TyFile.from_parent(parent, path=file_path)
 

@@ -54,3 +54,6 @@ coverage.xml
 # pyenv
 .python-version
 .venv
+
+# ruff
+.ruff_cache

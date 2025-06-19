@@ -28,7 +28,47 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = ["pytest>=7.0.0", "ty"]
+
 [project.urls]
 Repository = "https://github.com/boidolr/pytest-ty"
+
 [project.entry-points.pytest11]
 ty = "pytest_ty.plugin"
+
+[tool.ruff]
+line-length = 120
+fix = true
+
+[tool.ruff.lint]
+select = [
+    "F",    # Pyflakes
+    "E",
+    "W",    # Pycodestyle
+    "UP",   # pyupgrade
+    "FURB", # refurb
+    "S",    # flake8-bandit
+    "C4",   # flake8-comprehensions
+    "G",    # flake8-logging-format
+    "ANN",  # flake8-annotations
+    # "ARG",        # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+    "PT",     # flake8-pytest-style
+    "RET",    # flake8-return
+    "PTH",    # flake8-use-pathlib
+    "TID252", # flake8-tidy-imports (relative-imports)
+    "PERF",   # Perflint
+    "FLY",    # flynt
+    "I",      # isort
+    "RUF100", # Unneeded noqa
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/pytest_ty/plugin.py" = ["PT013"]
+"tests/*.py" = ["S101"]
+
+[tool.ruff.lint.flake8-annotations]
+ignore-fully-untyped = true
+
+[tool.ruff.lint.isort]
+force-single-line = true
+order-by-type = false
