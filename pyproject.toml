@@ -5,15 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pytest-ty"
 description = "A pytest plugin to run the ty type checker"
-version = "0.1.0"
+version = "0.1.1"
 readme = "README.md"
 requires-python = ">=3.9"
-authors = [
-    { name = "Raphael Boidol", email = "boidolr@users.noreply.github.com" },
-]
-maintainers = [
-    { name = "Raphael Boidol", email = "boidolr@users.noreply.github.com" },
-]
+authors = [{ name = "Raphael Boidol", email = "pytest-ty@boidol.dev" }]
 license = "MIT"
 license-files = ["LICENSE"]
 classifiers = [
