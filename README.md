@@ -23,7 +23,7 @@ Usage
 -----
 
 * Activate the plugin when running `pytest`: `pytest --ty`
-* Activate via `pytest` configuration: `addopts = ["--ty"]`
+* Activate via `pytest` configuration: `addopts = "--ty"`
 
 
 License
