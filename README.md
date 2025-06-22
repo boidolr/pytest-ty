@@ -1,6 +1,7 @@
 pytest-ty
 [![Build Status](https://github.com/boidolr/pytest-ty/actions/workflows/main.yaml/badge.svg)](https://github.com/boidolr/pytest-ty/actions/workflows/main.yaml "See Build Status on GitHub Actions")
 ![pypi](https://img.shields.io/pypi/v/pytest-ty.svg)
+![python](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fboidolr%2Fpytest-ty%2Fmain%2Fpyproject.toml)
 =========
 
 A [`pytest`](https://github.com/pytest-dev/pytest) plugin to run the [`ty`](https://github.com/astral-sh/ty) type checker.
@@ -18,7 +19,7 @@ Installation
 
 You can install "pytest-ty" from [`PyPI`](https://pypi.org):
 
-* `uv add pytest-ty`
+* `uv add --dev pytest-ty`
 * `pip install pytest-ty`
 
 Usage
