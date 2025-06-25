@@ -7,6 +7,9 @@ on:
     pull_request:
         branches:
             - main
+    schedule:
+        - cron: "15 7 */9 * *"
+    workflow_dispatch:
 
 jobs:
     test:
