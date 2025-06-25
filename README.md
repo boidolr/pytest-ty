@@ -1,6 +1,6 @@
 pytest-ty
 [![Build Status](https://github.com/boidolr/pytest-ty/actions/workflows/main.yaml/badge.svg)](https://github.com/boidolr/pytest-ty/actions/workflows/main.yaml "See Build Status on GitHub Actions")
-![pypi](https://img.shields.io/pypi/v/pytest-ty.svg)
+[![pypi](https://img.shields.io/pypi/v/pytest-ty.svg)](https://pypi.org/project/pytest-ty/ "See PyPI page")
 ![python](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fboidolr%2Fpytest-ty%2Fmain%2Fpyproject.toml)
 =========
 
