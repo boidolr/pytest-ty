@@ -11,7 +11,7 @@ Configuration
 ------------
 
 Configure `ty` in `pyproject.toml` or `ty.toml`,
-see the [`ty` README](https://github.com/astral-sh/ty/blob/main/docs/README.md).
+see the [`ty` documentation](https://docs.astral.sh/ty/).
 
 
 Installation
