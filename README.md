@@ -17,7 +17,7 @@ see the [`ty` documentation](https://docs.astral.sh/ty/).
 Installation
 ------------
 
-You can install "pytest-ty" from [`PyPI`](https://pypi.org):
+You can install `pytest-ty` from [`PyPI`](https://pypi.org):
 
 * `uv add --dev pytest-ty`
 * `pip install pytest-ty`
@@ -32,4 +32,4 @@ Usage
 License
 -------
 
-Distributed under the terms of the [`MIT`](https://opensource.org/licenses/MIT) license, "pytest-ty" is free and open source software
+`pytest-ty` is licensed under the MIT license (LICENSE or https://opensource.org/licenses/MIT).
