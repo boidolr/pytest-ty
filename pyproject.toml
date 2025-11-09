@@ -49,7 +49,7 @@ fix = true
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["ARG001", "D"]
+ignore = ["ARG001", "COM812", "D"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/pytest_ty/plugin.py" = ["PT013"]
