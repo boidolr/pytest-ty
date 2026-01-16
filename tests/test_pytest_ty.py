@@ -53,6 +53,32 @@ def test_ty_checking_fails(pytester):
     assert result.ret == 1
 
 
+def test_ty_exclude_ignores_matching_file(pytester):
+    """Make sure that configured excludes are respected."""
+
+    pytester.makepyfile(
+        test_ignored_file="""
+        def test_failure() -> int:
+            assert True
+    """
+    )
+
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*::ty FAILED*"])
+    assert result.ret == 1
+
+    pytester.makepyprojecttoml("""
+    [tool.ty.src]
+    exclude = ["test_ignored_file.py"]
+    """)
+
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*::ty PASSED*"])
+    assert result.ret == 0
+
+
 def test_help_message(pytester):
     result = pytester.runpytest("--help")
 

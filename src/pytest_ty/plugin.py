@@ -83,8 +83,9 @@ class TyItem(Item):
         command = [
             self.__ty,
             "check",
-            path,
             "--output-format=full",
+            "--force-exclude",
+            path,
         ]
         child = Popen(command, stdout=PIPE, stderr=PIPE)  # noqa: S603
         stdout, _ = child.communicate()
