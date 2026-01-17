@@ -30,6 +30,12 @@ classifiers = [
 ]
 dependencies = ["pytest>=7.0.0", "ty"]
 
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
 [project.urls]
 Repository = "https://github.com/boidolr/pytest-ty"
 
