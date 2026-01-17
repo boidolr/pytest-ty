@@ -1,8 +1,4 @@
-from unittest import mock
-
 import pytest
-
-from pytest_ty.plugin import set_stash
 
 
 @pytest.fixture
@@ -19,7 +15,7 @@ def failing_test(pytester):
 @pytest.fixture
 def passing_test(pytester):
     pytester.makepyfile("""
-        def test_sth() -> None:
+        def test_case() -> None:
             assert True
     """)
 
@@ -28,12 +24,16 @@ def passing_test(pytester):
 def test_ty_skipped_if_disabled(pytester):
     """Make sure that `ty` does not run if plugin is disabled."""
 
-    set_stash_mock = mock.MagicMock(spec=set_stash)
-    mock.patch("pytest_ty.set_stash", set_stash_mock)
+    pytester.makefile(".ini", pytest="[pytest]\naddopts=--ty\n")
 
-    result = pytester.runpytest("-p no:ty", "-v")
+    result = pytester.runpytest("-v")
+    result.stdout.fnmatch_lines(["*::ty*"])
+    assert result.ret == 0
 
-    set_stash_mock.assert_not_called()
+    pytester.makefile(".ini", pytest="[pytest]\naddopts=-p no:ty\n")
+
+    result = pytester.runpytest("-v")
+    result.stdout.no_fnmatch_line("*::ty*")
     assert result.ret == 0
 
 
