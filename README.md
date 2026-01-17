@@ -32,4 +32,4 @@ Usage
 License
 -------
 
-`pytest-ty` is licensed under the MIT license (LICENSE or https://opensource.org/licenses/MIT).
+`pytest-ty` is licensed under the MIT license ([`LICENSE`](./LICENSE) or https://opensource.org/licenses/MIT).
