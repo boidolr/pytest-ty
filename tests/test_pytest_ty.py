@@ -1,15 +1,33 @@
 from unittest import mock
 
+import pytest
+
 from pytest_ty.plugin import set_stash
 
 
-def test_no_ty_run_if_disabled(pytester):
-    """Make sure that `ty` does not run if plugin is disabled."""
+@pytest.fixture
+def failing_test(pytester):
+    pytester.makepyfile(
+        test_ignored_file="""
+        def test_failure() -> None:
+            value: int = "1"
+            assert True
+    """
+    )
 
+
+@pytest.fixture
+def passing_test(pytester):
     pytester.makepyfile("""
         def test_sth() -> None:
             assert True
     """)
+
+
+@pytest.mark.usefixtures("passing_test")
+def test_ty_skipped_if_disabled(pytester):
+    """Make sure that `ty` does not run if plugin is disabled."""
+
     set_stash_mock = mock.MagicMock(spec=set_stash)
     mock.patch("pytest_ty.set_stash", set_stash_mock)
 
@@ -19,16 +37,9 @@ def test_no_ty_run_if_disabled(pytester):
     assert result.ret == 0
 
 
+@pytest.mark.usefixtures("passing_test")
 def test_ty_checking_passes(pytester):
     """Make sure that `ty` runs on code."""
-
-    pytester.makepyfile("""
-        from pytest import mark
-
-        @mark.parametrize("bar", ["test_value"])
-        def test_sth(bar: str) -> None:
-            assert bar == "test_value"
-    """)
 
     result = pytester.runpytest("--ty", "-v")
 
@@ -36,16 +47,9 @@ def test_ty_checking_passes(pytester):
     assert result.ret == 0
 
 
+@pytest.mark.usefixtures("failing_test")
 def test_ty_checking_fails(pytester):
     """Make sure that `ty` runs on code and detects issues."""
-
-    pytester.makepyfile("""
-        from pytest import mark
-
-        @mark.parametrize("bar", ["test_value"])
-        def test_sth(bar: str) -> str:
-            assert bar == "test_value"
-    """)
 
     result = pytester.runpytest("--ty", "-v")
 
@@ -53,15 +57,9 @@ def test_ty_checking_fails(pytester):
     assert result.ret == 1
 
 
+@pytest.mark.usefixtures("failing_test")
 def test_ty_exclude_ignores_matching_file(pytester):
     """Make sure that configured excludes are respected."""
-
-    pytester.makepyfile(
-        test_ignored_file="""
-        def test_failure() -> int:
-            assert True
-    """
-    )
 
     result = pytester.runpytest("--ty", "-v")
 
