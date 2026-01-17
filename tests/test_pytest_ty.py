@@ -77,6 +77,23 @@ def test_ty_exclude_ignores_matching_file(pytester):
     assert result.ret == 0
 
 
+@pytest.mark.usefixtures("failing_test")
+def test_ty_config_disables_rule(pytester):
+    """Make sure that configured excludes are respected."""
+
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*::ty FAILED*"])
+    assert result.ret == 1
+
+    pytester.makefile(".toml", ty='[rules]\ninvalid-assignment="ignore"\n')
+
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*::ty PASSED*"])
+    assert result.ret == 0
+
+
 def test_help_message(pytester):
     result = pytester.runpytest("--help")
 
