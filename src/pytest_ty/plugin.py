@@ -76,9 +76,6 @@ class TyItem(Item):
         if ty_mtimes := get_stash(self.config):
             ty_mtimes[str(self.path)] = self._tymtime
 
-    def reportinfo(self):
-        return (self.fspath, None, "")
-
     def handler(self, path):
         command = [
             self.__ty,
