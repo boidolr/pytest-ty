@@ -8,7 +8,7 @@ from pytest import StashKey
 from ty.__main__ import find_ty_bin
 
 HISTKEY = "ty/mtimes"
-_MTIMES_STASH_KEY = StashKey[dict[str, float]]()
+_MTIMES_STASH_KEY = StashKey[dict[str, int]]()
 
 
 def pytest_addoption(parser):
@@ -63,18 +63,18 @@ class TyItem(Item):
         self.add_marker(TyItem.name)
 
     def setup(self):
-        self._tymtime = self.fspath.mtime()
+        self._tymtime = self.path.stat().st_mtime_ns
 
         if ty_mtimes := get_stash(self.config):
-            old = ty_mtimes.get(str(self.fspath))
+            old = ty_mtimes.get(str(self.path))
             if old == self._tymtime:
                 skip("file previously passed ty checks")
 
     def runtest(self):
-        self.handler(path=self.fspath)
+        self.handler(path=self.path)
 
         if ty_mtimes := get_stash(self.config):
-            ty_mtimes[str(self.fspath)] = self._tymtime
+            ty_mtimes[str(self.path)] = self._tymtime
 
     def reportinfo(self):
         return (self.fspath, None, "")
