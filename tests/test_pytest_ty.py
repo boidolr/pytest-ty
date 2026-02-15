@@ -47,6 +47,16 @@ def test_ty_checking_passes(pytester):
     assert result.ret == 0
 
 
+@pytest.mark.usefixtures("passing_test")
+def test_ty_checking_passes_without_cache(pytester):
+    """Make sure that unavailable cache will not raise."""
+
+    result = pytester.runpytest("--ty", "-v", "-pno:cacheprovider")
+
+    result.stdout.fnmatch_lines(["*::ty PASSED*"])
+    assert result.ret == 0
+
+
 @pytest.mark.usefixtures("failing_test")
 def test_ty_checking_fails(pytester):
     """Make sure that `ty` runs on code and detects issues."""
