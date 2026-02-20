@@ -1,3 +1,4 @@
+from functools import cache
 from subprocess import PIPE
 from subprocess import Popen
 
@@ -45,6 +46,11 @@ def pytest_sessionfinish(session, exitstatus):
         config.cache.set(HISTKEY, cache)
 
 
+@cache
+def _ty_bin():
+    return find_ty_bin()
+
+
 class TyError(Exception):
     pass
 
@@ -56,7 +62,6 @@ class TyFile(File):
 
 class TyItem(Item):
     name = "ty"
-    __ty = find_ty_bin()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,7 +83,7 @@ class TyItem(Item):
 
     def handler(self, path):
         command = [
-            self.__ty,
+            _ty_bin(),
             "check",
             "--output-format=full",
             "--force-exclude",
