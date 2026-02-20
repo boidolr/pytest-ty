@@ -87,13 +87,14 @@ class TyItem(Item):
             "check",
             "--output-format=full",
             "--force-exclude",
-            path,
+            str(path),
         ]
         child = Popen(command, stdout=PIPE, stderr=PIPE)  # noqa: S603
-        stdout, _ = child.communicate()
+        stdout, stderr = child.communicate()
 
         if child.returncode != 0:
-            raise TyError(stdout.decode())
+            msg = "\n".join([stdout.decode(errors="replace"), stderr.decode(errors="replace")])
+            raise TyError(msg)
 
 
 def get_stash(config):
