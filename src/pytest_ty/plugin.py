@@ -1,6 +1,7 @@
 from functools import cache
-from subprocess import PIPE
-from subprocess import Popen
+from subprocess import CalledProcessError
+from subprocess import run
+from subprocess import TimeoutExpired
 
 from pytest import File
 from pytest import Item
@@ -89,12 +90,16 @@ class TyItem(Item):
             "--force-exclude",
             str(path),
         ]
-        child = Popen(command, stdout=PIPE, stderr=PIPE)  # noqa: S603
-        stdout, stderr = child.communicate()
-
-        if child.returncode != 0:
-            msg = "\n".join([stdout.decode(errors="replace"), stderr.decode(errors="replace")])
-            raise TyError(msg)
+        try:
+            run(command, check=True, timeout=15)  # noqa: S603
+        except (CalledProcessError, TimeoutExpired) as e:
+            msg = "\n".join(
+                [
+                    e.stdout.decode(errors="replace"),
+                    e.stderr.decode(errors="replace"),
+                ]
+            )
+            raise TyError(msg) from e
 
 
 def get_stash(config):
