@@ -36,4 +36,4 @@ jobs:
                   key: ${{ runner.os }}-${{ matrix.python-version }}-tox-${{ hashFiles('pyproject.toml') }}
 
             - name: Test
-              run: uvx --with tox-gh-actions --with tox-uv tox -v
+              run: uvx --python ${{ matrix.python-version }} --with tox-gh-actions --with tox-uv tox -v
