@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.fixture
-def failing_test(pytester):
+def failing_test(pytester: pytest.Pytester) -> None:
     pytester.makepyfile(
         test_failing_file="""
         def test_failure() -> None:
@@ -23,7 +23,7 @@ def passing_test(pytester: pytest.Pytester) -> None:
 
 
 @pytest.mark.usefixtures("passing_test")
-def test_ty_skipped_if_disabled(pytester):
+def test_ty_skipped_if_disabled(pytester: pytest.Pytester) -> None:
     """Make sure that `ty` does not run if plugin is disabled."""
 
     pytester.makefile(".ini", pytest="[pytest]\naddopts=--ty\n")
@@ -40,7 +40,7 @@ def test_ty_skipped_if_disabled(pytester):
 
 
 @pytest.mark.usefixtures("passing_test")
-def test_ty_checking_passes(pytester):
+def test_ty_checking_passes(pytester: pytest.Pytester) -> None:
     """Make sure that `ty` runs on code."""
 
     result = pytester.runpytest("--ty", "-v")
@@ -50,7 +50,7 @@ def test_ty_checking_passes(pytester):
 
 
 @pytest.mark.usefixtures("passing_test")
-def test_ty_checking_passes_without_cache(pytester):
+def test_ty_checking_passes_without_cache(pytester: pytest.Pytester) -> None:
     """Make sure that unavailable cache will not raise."""
 
     result = pytester.runpytest("--ty", "-v", "-pno:cacheprovider")
@@ -60,7 +60,7 @@ def test_ty_checking_passes_without_cache(pytester):
 
 
 @pytest.mark.usefixtures("failing_test")
-def test_ty_checking_fails(pytester):
+def test_ty_checking_fails(pytester: pytest.Pytester) -> None:
     """Make sure that `ty` runs on code and detects issues."""
 
     result = pytester.runpytest("--ty", "-v")
@@ -70,7 +70,7 @@ def test_ty_checking_fails(pytester):
 
 
 @pytest.mark.usefixtures("failing_test")
-def test_ty_exclude_ignores_matching_file(pytester):
+def test_ty_exclude_ignores_matching_file(pytester: pytest.Pytester) -> None:
     """Make sure that configured excludes are respected."""
 
     result = pytester.runpytest("--ty", "-v")
@@ -90,7 +90,7 @@ def test_ty_exclude_ignores_matching_file(pytester):
 
 
 @pytest.mark.usefixtures("failing_test")
-def test_ty_config_disables_rule(pytester):
+def test_ty_config_disables_rule(pytester: pytest.Pytester) -> None:
     """Make sure that configured excludes are respected."""
 
     result = pytester.runpytest("--ty", "-v")
