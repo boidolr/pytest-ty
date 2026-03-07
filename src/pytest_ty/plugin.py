@@ -1,16 +1,21 @@
 from functools import cache
+from re import match
 from subprocess import CalledProcessError
 from subprocess import run
 from subprocess import TimeoutExpired
+from sys import version_info
 
 from pytest import File
 from pytest import Item
-from pytest import skip
 from pytest import StashKey
 from ty.__main__ import find_ty_bin
 
-HISTKEY = "ty/mtimes"
-_MTIMES_STASH_KEY = StashKey[dict[str, int]]()
+if version_info < (3, 11):
+    ty_file_regex = r"^ --> ([^:]+):\d+:\d+"
+else:
+    ty_file_regex = r"^ --> ([^:]++):\d++:\d++"
+
+_TY_RESULTS_STASH_KEY = StashKey[dict[str, list[str]]]()
 
 
 def pytest_addoption(parser):
@@ -21,11 +26,6 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     config.addinivalue_line("markers", "ty: Tests which run ty.")
 
-    if not config.option.ty or not hasattr(config, "cache"):
-        return
-
-    set_stash(config, config.cache.get(HISTKEY, {}))
-
 
 def pytest_collect_file(file_path, parent):
     config = parent.config
@@ -35,16 +35,49 @@ def pytest_collect_file(file_path, parent):
     return TyFile.from_parent(parent, path=file_path)
 
 
-def pytest_sessionfinish(session, exitstatus):
-    config = session.config
+def _run_ty_once(config) -> dict[str, list[str]]:
+    if (results := config.stash.get(_TY_RESULTS_STASH_KEY)) is not None:
+        return results
 
-    if not config.option.ty or not hasattr(config, "cache"):
-        return
+    command = [_ty_bin(), "check", "--output-format=full"]
+    results = {}
 
-    if not hasattr(config, "workerinput"):
-        cache = config.cache.get(HISTKEY, {})
-        cache.update(get_stash(config))
-        config.cache.set(HISTKEY, cache)
+    try:
+        run(command, check=True, timeout=60, capture_output=True, cwd=config.rootpath)  # noqa: S603
+    except CalledProcessError as e:
+        output = e.stdout.decode(errors="replace") if e.stdout else ""
+        results = _parse_ty_output(output)
+    except TimeoutExpired as e:
+        msg = "\n".join(
+            [
+                e.stdout.decode(errors="replace") if e.stdout else "",
+                e.stderr.decode(errors="replace") if e.stderr else "",
+            ]
+        )
+        results = {"*": [msg]}
+
+    config.stash[_TY_RESULTS_STASH_KEY] = results
+    return results
+
+
+def _parse_ty_output(output: str) -> dict[str, list[str]]:
+    results: dict[str, list[str]] = {}
+    current_error = []
+    current_file = None
+
+    for line in output.split("\n"):
+        if match := match(ty_file_regex, line):
+            if current_error and current_file:
+                results.setdefault(current_file, []).append("\n".join(current_error).strip())
+            current_file = match.group(1)
+            current_error = [line]
+        elif current_file:
+            current_error.append(line)
+
+    if current_error and current_file:
+        results.setdefault(current_file, []).append("\n".join(current_error).strip())
+
+    return results
 
 
 @cache
@@ -68,43 +101,10 @@ class TyItem(Item):
         super().__init__(*args, **kwargs)
         self.add_marker(TyItem.name)
 
-    def setup(self):
-        self._tymtime = self.path.stat().st_mtime_ns
-
-        if ty_mtimes := get_stash(self.config):
-            old = ty_mtimes.get(str(self.path))
-            if old == self._tymtime:
-                skip("file previously passed ty checks")
-
     def runtest(self):
-        self.handler(path=self.path)
+        results = _run_ty_once(self.config)
+        file_key = str(self.path.relative_to(self.config.rootpath))
+        errors = results.get(file_key, [])
 
-        if ty_mtimes := get_stash(self.config):
-            ty_mtimes[str(self.path)] = self._tymtime
-
-    def handler(self, path):
-        command = [
-            _ty_bin(),
-            "check",
-            "--output-format=full",
-            "--force-exclude",
-            str(path),
-        ]
-        try:
-            run(command, check=True, timeout=15)  # noqa: S603
-        except (CalledProcessError, TimeoutExpired) as e:
-            msg = "\n".join(
-                [
-                    e.stdout.decode(errors="replace"),
-                    e.stderr.decode(errors="replace"),
-                ]
-            )
-            raise TyError(msg) from e
-
-
-def get_stash(config):
-    return config.stash.get(_MTIMES_STASH_KEY, default=None)
-
-
-def set_stash(config, value):
-    config.stash[_MTIMES_STASH_KEY] = value
+        if errors:
+            raise TyError("\n".join(errors))
