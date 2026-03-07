@@ -1,6 +1,5 @@
 import functools
 import subprocess
-import sys
 import typing
 
 import pytest
@@ -11,7 +10,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 
 _TY_RESULTS_STASH_KEY = pytest.StashKey[dict[str, list[str]]]()
-_ERROR_MARKER: typing.Final = "*"
+_TY_FAILURE_MARKER: typing.Final = "*"
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -31,6 +30,18 @@ def pytest_collect_file(file_path: "pathlib.Path", parent: pytest.Collector) -> 
     return TyFile.from_parent(parent, path=file_path)
 
 
+def pytest_collection_modifyitems(session: pytest.Session, items: list[pytest.Item]) -> None:
+    config = session.config
+    if not config.option.ty:
+        return
+
+    if any(isinstance(item, TyStatusItem) for item in items):
+        return
+
+    status_item = TyStatusItem.from_parent(session, name=TyStatusItem.name)
+    items.append(status_item)
+
+
 def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
     if (results := config.stash.get(_TY_RESULTS_STASH_KEY, None)) is not None:
         return results
@@ -41,8 +52,12 @@ def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
     try:
         subprocess.run(command, check=True, timeout=60, capture_output=True, cwd=config.rootpath)  # noqa: S603
     except subprocess.CalledProcessError as e:
-        output = e.stdout.decode(errors="replace") if e.stdout else ""
-        results = _parse_ty_output(output)
+        stdout = e.stdout.decode(errors="replace") if e.stdout else "<empty>"
+        stderr = e.stderr.decode(errors="replace") if e.stderr else "<empty>"
+        results = _parse_ty_output(stdout)
+        if not results:
+            msg = f"ty exited with code {e.returncode}, stdout: {stdout}, stderr: {stderr}"
+            results = {_TY_FAILURE_MARKER: [msg]}
     except subprocess.TimeoutExpired as e:
         msg = "\n".join(
             [
@@ -50,17 +65,19 @@ def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
                 e.stderr.decode(errors="replace") if e.stderr else "",
             ]
         )
-        results = {_ERROR_MARKER: [msg]}
+        if not msg.strip():
+            msg = f"`ty check` timed out after {e.timeout} seconds while running: {' '.join(map(str, command))}"
+        results = {_TY_FAILURE_MARKER: [msg]}
 
     config.stash[_TY_RESULTS_STASH_KEY] = results
     return results
 
 
 def _parse_ty_output(output: str) -> dict[str, list[str]]:
-    results: dict[str, list[str]] = {_ERROR_MARKER: ["type checking failed"]}
+    results: dict[str, list[str]] = {}
 
     for line in output.split("\n"):
-        line = line.strip()
+        line = line.strip()  # noqa: PLW2901  # loop variable cleanup
         parts = line.rsplit(":", 3)
         if len(parts) < 4:  # noqa: PLR2004  # format is `file_name.py:line:pos:error_message
             continue
@@ -79,10 +96,9 @@ class TyError(Exception):
     pass
 
 
-
 class TyFile(pytest.File):
-    def collect(self) -> "typing.Iterator[TyItem]":
-        yield TyItem.from_parent(self, name=TyItem.name)
+    def collect(self) -> "list[TyItem]":
+        return [TyItem.from_parent(self, name=TyItem.name)]
 
 
 class TyItem(pytest.Item):
@@ -94,8 +110,24 @@ class TyItem(pytest.Item):
 
     def runtest(self) -> None:
         results = _run_ty_once(self.config)
+
         file_key = str(self.path.relative_to(self.config.rootpath))
         errors = results.get(file_key, [])
 
         if errors:
             raise TyError("\n".join(errors))
+
+
+class TyStatusItem(pytest.Item):
+    name = "ty::status"
+
+    def runtest(self) -> None:
+        results = _run_ty_once(self.config)
+
+        if not len(results):
+            return
+
+        if _TY_FAILURE_MARKER in results:
+            raise TyError("\n".join(results[_TY_FAILURE_MARKER]))
+
+        raise TyError("\n".join(results.keys()))

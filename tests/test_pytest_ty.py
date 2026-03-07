@@ -1,3 +1,5 @@
+import subprocess
+
 import pytest
 
 
@@ -20,6 +22,14 @@ def passing_test(pytester: pytest.Pytester) -> None:
             assert True
     """
     )
+
+
+@pytest.fixture
+def timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    def mock_run(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=[], timeout=1)
+
+    monkeypatch.setattr(subprocess, "run", mock_run)
 
 
 @pytest.mark.usefixtures("passing_test")
@@ -136,3 +146,45 @@ def test_help_message(pytester: pytest.Pytester) -> None:
     result = pytester.runpytest("--help")
 
     result.stdout.fnmatch_lines(["ty:", "*--ty*enable type checking with ty"])
+
+
+@pytest.mark.usefixtures("failing_test")
+def test_status_item_shown_on_failure(pytester: pytest.Pytester) -> None:
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
+    assert result.ret == 1
+
+
+@pytest.mark.usefixtures("failing_test")
+def test_status_item_includes_file_names(pytester: pytest.Pytester) -> None:
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*test_failing_file.py*"])
+    assert result.ret == 1
+
+
+@pytest.mark.usefixtures("passing_test")
+def test_status_item_shown_on_pass(pytester: pytest.Pytester) -> None:
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*::ty::status PASSED*"])
+    assert result.ret == 0
+
+
+@pytest.mark.usefixtures("passing_test", "timeout")
+def test_timeout_handling_passing_check(pytester: pytest.Pytester) -> None:
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*::ty PASSED*"])
+    result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
+    assert result.ret == 1
+
+
+@pytest.mark.usefixtures("failing_test", "timeout")
+def test_timeout_handling_failing_check(pytester: pytest.Pytester) -> None:
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*::ty PASSED*"])
+    result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
+    assert result.ret == 1
