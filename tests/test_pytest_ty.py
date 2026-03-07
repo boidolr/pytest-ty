@@ -4,7 +4,7 @@ import pytest
 @pytest.fixture
 def failing_test(pytester):
     pytester.makepyfile(
-        test_ignored_file="""
+        test_failing_file="""
         def test_failure() -> None:
             value: int = "1"
             assert True
@@ -13,11 +13,13 @@ def failing_test(pytester):
 
 
 @pytest.fixture
-def passing_test(pytester):
-    pytester.makepyfile("""
+def passing_test(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        test_passing_file="""
         def test_case() -> None:
             assert True
-    """)
+    """
+    )
 
 
 @pytest.mark.usefixtures("passing_test")
@@ -78,7 +80,7 @@ def test_ty_exclude_ignores_matching_file(pytester):
 
     pytester.makepyprojecttoml("""
     [tool.ty.src]
-    exclude = ["test_ignored_file.py"]
+    exclude = ["test_failing_file.py"]
     """)
 
     result = pytester.runpytest("--ty", "-v")
@@ -104,7 +106,33 @@ def test_ty_config_disables_rule(pytester):
     assert result.ret == 0
 
 
-def test_help_message(pytester):
+def test_ty_two_files_both_pass(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        test_file1="""
+        def test_a() -> None:
+            assert True
+        """,
+        test_file2="""
+        def test_b() -> None:
+            assert True
+        """,
+    )
+    result = pytester.runpytest("--ty", "-v")
+    result.stdout.fnmatch_lines(["*test_file1.py::ty PASSED*", "*test_file2.py::ty PASSED*"])
+    result.stdout.no_fnmatch_line("*::ty FAILED*")
+    assert result.ret == 0
+
+
+@pytest.mark.usefixtures("passing_test", "failing_test")
+def test_ty_two_files_one_fails(pytester: pytest.Pytester) -> None:
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*test_passing_file.py::ty PASSED*"])
+    result.stdout.fnmatch_lines(["*test_failing_file.py::ty FAILED*"])
+    assert result.ret == 1
+
+
+def test_help_message(pytester: pytest.Pytester) -> None:
     result = pytester.runpytest("--help")
 
     result.stdout.fnmatch_lines(["ty:", "*--ty*enable type checking with ty"])
