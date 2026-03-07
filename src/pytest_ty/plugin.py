@@ -17,6 +17,7 @@ else:
 
 
 _TY_RESULTS_STASH_KEY = pytest.StashKey[dict[str, list[str]]]()
+_ERROR_MARKER: typing.Final = "*"
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -55,14 +56,14 @@ def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
                 e.stderr.decode(errors="replace") if e.stderr else "",
             ]
         )
-        results = {"*": [msg]}
+        results = {_ERROR_MARKER: [msg]}
 
     config.stash[_TY_RESULTS_STASH_KEY] = results
     return results
 
 
 def _parse_ty_output(output: str) -> dict[str, list[str]]:
-    results: dict[str, list[str]] = {}
+    results: dict[str, list[str]] = {_ERROR_MARKER: ["type checking failed"]}
     current_error = []
     current_file = None
 
