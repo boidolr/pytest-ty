@@ -1,5 +1,4 @@
 import functools
-import re
 import subprocess
 import sys
 import typing
@@ -9,11 +8,6 @@ from ty.__main__ import find_ty_bin
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     import pathlib
-
-if sys.version_info < (3, 11):
-    ty_file_regex = r"^ --> ([^:]+):\d+:\d+"
-else:
-    ty_file_regex = r"^ --> ([^:]++):\d++:\d++"
 
 
 _TY_RESULTS_STASH_KEY = pytest.StashKey[dict[str, list[str]]]()
@@ -41,7 +35,7 @@ def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
     if (results := config.stash.get(_TY_RESULTS_STASH_KEY, None)) is not None:
         return results
 
-    command = [_ty_bin(), "check", "--output-format=full"]
+    command = [_ty_bin(), "check", "--output-format=concise"]
     results = {}
 
     try:
@@ -64,20 +58,14 @@ def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
 
 def _parse_ty_output(output: str) -> dict[str, list[str]]:
     results: dict[str, list[str]] = {_ERROR_MARKER: ["type checking failed"]}
-    current_error = []
-    current_file = None
 
     for line in output.split("\n"):
-        if match := re.match(ty_file_regex, line):
-            if current_error and current_file:
-                results.setdefault(current_file, []).append("\n".join(current_error).strip())
-            current_file = match.group(1)
-            current_error = [line]
-        elif current_file:
-            current_error.append(line)
-
-    if current_error and current_file:
-        results.setdefault(current_file, []).append("\n".join(current_error).strip())
+        line = line.strip()
+        parts = line.rsplit(":", 3)
+        if len(parts) < 4:  # noqa: PLR2004  # format is `file_name.py:line:pos:error_message
+            continue
+        file_path = parts[0]
+        results.setdefault(file_path, []).append(line)
 
     return results
 
