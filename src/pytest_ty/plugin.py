@@ -1,4 +1,5 @@
 import functools
+import itertools
 import subprocess
 import typing
 
@@ -130,4 +131,4 @@ class TyStatusItem(pytest.Item):
         if _TY_FAILURE_MARKER in results:
             raise TyError("\n".join(results[_TY_FAILURE_MARKER]))
 
-        raise TyError("\n".join(results.keys()))
+        raise TyError("\n".join(itertools.chain.from_iterable(results.values())))
