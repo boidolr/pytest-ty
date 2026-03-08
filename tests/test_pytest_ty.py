@@ -208,5 +208,25 @@ def test_status_item_shows_all_failures_with_verbose(pytester: pytest.Pytester) 
     result.stdout.fnmatch_lines(["*test_failing_file.py::ty FAILED*"])
     result.stdout.fnmatch_lines(["*test_another_failing_file.py::ty FAILED*"])
     result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
-    result.stdout.fnmatch_lines(["*invalid-assignment*"])
+    result.stdout.fnmatch_lines(["*:2:18:*invalid-assignment*"])
+    assert result.ret == 1
+
+
+def test_type_ignore_comment_parsing(pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(
+        test_colon_error="""
+        from typing import TypedDict
+
+        class MyDict(TypedDict):
+            name: str
+
+        def test_case() -> None:
+            d: MyDict = {"name": "test", "extra": 1}
+    """
+    )
+
+    result = pytester.runpytest("--ty", "-v")
+
+    result.stdout.fnmatch_lines(["*test_colon_error.py::ty FAILED*"])
+    result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
     assert result.ret == 1

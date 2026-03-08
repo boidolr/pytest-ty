@@ -1,5 +1,6 @@
 import functools
 import itertools
+import json
 import subprocess
 import typing
 
@@ -47,13 +48,13 @@ def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
     if (results := config.stash.get(_TY_RESULTS_STASH_KEY, None)) is not None:
         return results
 
-    command = [_ty_bin(), "check", "--output-format=concise"]
+    command = [_ty_bin(), "check", "--output-format=gitlab"]
     results = {}
 
     try:
         subprocess.run(command, check=True, timeout=60, capture_output=True, cwd=config.rootpath)  # noqa: S603
     except subprocess.CalledProcessError as e:
-        stdout = e.stdout.decode(errors="replace") if e.stdout else "<empty>"
+        stdout = e.stdout.decode(errors="replace") if e.stdout else "[]"
         stderr = e.stderr.decode(errors="replace") if e.stderr else "<empty>"
         results = _parse_ty_output(stdout)
         if not results:
@@ -75,15 +76,21 @@ def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
 
 
 def _parse_ty_output(output: str) -> dict[str, list[str]]:
-    results: dict[str, list[str]] = {}
+    try:
+        diagnostics = json.loads(output)
+    except json.JSONDecodeError:
+        return {}
 
-    for line in output.split("\n"):
-        line = line.strip()  # noqa: PLW2901  # loop variable cleanup
-        parts = line.rsplit(":", 3)
-        if len(parts) < 4:  # noqa: PLR2004  # format is `file_name.py:line:pos:error_message
+    results: dict[str, list[str]] = {}
+    for diag in diagnostics:
+        path = diag.get("location", {}).get("path", "")
+        if not path:
             continue
-        file_path = parts[0]
-        results.setdefault(file_path, []).append(line)
+        line = diag["location"]["positions"]["begin"]["line"]
+        column = diag["location"]["positions"]["begin"]["column"]
+        description = diag.get("description", "<ty failure>")
+        message = f"{path}:{line}:{column}: {description}"
+        results.setdefault(path, []).append(message)
 
     return results
 
