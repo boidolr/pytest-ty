@@ -204,7 +204,7 @@ def test_timeout_handling_failing_check(pytester: pytest.Pytester) -> None:
 def test_status_item_shows_all_failures_with_verbose(pytester: pytest.Pytester) -> None:
     result = pytester.runpytest("--ty", "-v")
 
-    result.stdout.fnmatch_lines("*test_passing_file.py::ty PASSED*")
+    result.stdout.fnmatch_lines(["*test_passing_file.py::ty PASSED*"])
     result.stdout.fnmatch_lines(["*test_failing_file.py::ty FAILED*"])
     result.stdout.fnmatch_lines(["*test_another_failing_file.py::ty FAILED*"])
     result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
@@ -212,7 +212,7 @@ def test_status_item_shows_all_failures_with_verbose(pytester: pytest.Pytester) 
     assert result.ret == 1
 
 
-def test_type_ignore_comment_parsing(pytester: pytest.Pytester) -> None:
+def test_stable_comment_parsing(pytester: pytest.Pytester) -> None:
     pytester.makepyfile(
         test_colon_error="""
         from typing import TypedDict
