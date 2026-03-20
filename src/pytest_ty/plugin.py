@@ -5,7 +5,7 @@ import subprocess
 import typing
 
 import pytest
-from ty.__main__ import find_ty_bin
+from ty import find_ty_bin
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     import pathlib
