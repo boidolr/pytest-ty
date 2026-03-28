@@ -8,3 +8,5 @@ updates:
       interval: "weekly"
     assignees:
       - "boidolr"
+    cooldown:
+      default-days: 7
