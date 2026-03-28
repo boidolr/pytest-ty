@@ -28,12 +28,12 @@ classifiers = [
   "Topic :: Software Development :: Quality Assurance",
   "Topic :: Software Development :: Testing",
 ]
-dependencies = ["pytest>=7.0.0", "ty"]
+dependencies = ["pytest>=7.0.0", "ty>=0.0.2"]
 
 [dependency-groups]
 dev = [
     "pytest",
-    "pytest-cov",
+    "pytest-cov>=7.0.0",
 ]
 
 [project.urls]
