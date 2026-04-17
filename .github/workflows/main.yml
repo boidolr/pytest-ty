@@ -41,10 +41,10 @@ jobs:
               uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
               with:
                   path: .tox
-                  key: ${{ runner.os }}-${{ matrix.python-version }}-tox-${{ hashFiles('pyproject.toml') }}
+                  key: ${{ runner.os }}-${{ matrix.python-version }}-tox-${{ hashFiles('pyproject.toml', 'tox.ini') }}
 
             - name: Install tox
               run: uv tool install --python ${{ matrix.python-version }} --with tox-gh-actions --with tox-uv-bare tox
 
             - name: Test
-              run: tox -e ${{ matrix.python-version }}
+              run: tox
