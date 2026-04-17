@@ -43,5 +43,8 @@ jobs:
                   path: .tox
                   key: ${{ runner.os }}-${{ matrix.python-version }}-tox-${{ hashFiles('pyproject.toml') }}
 
+            - name: Install tox
+              run: uv tool install --python ${{ matrix.python-version }} --with tox-gh-actions --with tox-uv-bare tox
+
             - name: Test
-              run: uvx --python ${{ matrix.python-version }} --with tox-gh-actions --with tox-uv tox
+              run: tox -e ${{ matrix.python-version }}
