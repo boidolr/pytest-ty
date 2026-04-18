@@ -60,6 +60,8 @@ def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
         if not results:
             msg = f"ty exited with code {e.returncode}, stdout: {stdout}, stderr: {stderr}"
             results = {_TY_FAILURE_MARKER: [msg]}
+        else:
+            results = {_TY_FAILURE_MARKER: [f"ty exited with code {e.returncode}"], **results}
     except subprocess.TimeoutExpired as e:
         msg = "\n".join(
             [
@@ -135,7 +137,9 @@ class TyStatusItem(pytest.Item):
         if not results:
             return
 
-        if _TY_FAILURE_MARKER in results:
-            raise TyError("\n".join(results[_TY_FAILURE_MARKER]))
-
-        raise TyError("\n".join(itertools.chain.from_iterable(results.values())))
+        collected_files = {
+            str(item.path.relative_to(self.config.rootpath)) for item in self.session.items if isinstance(item, TyItem)
+        }
+        uncovered = [results[k] for k in sorted(results) if k not in collected_files]
+        if uncovered:
+            raise TyError("\n".join(itertools.chain.from_iterable(uncovered)))

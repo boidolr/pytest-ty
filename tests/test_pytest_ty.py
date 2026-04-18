@@ -162,7 +162,9 @@ def test_help_message(pytester: pytest.Pytester) -> None:
 def test_status_item_shown_on_failure(pytester: pytest.Pytester) -> None:
     result = pytester.runpytest("--ty", "-v")
 
+    result.stdout.fnmatch_lines(["*::ty FAILED*"])
     result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
+    result.stdout.fnmatch_lines(["*ty exited with code*"])
     assert result.ret == 1
 
 
@@ -209,6 +211,7 @@ def test_status_item_shows_all_failures_with_verbose(pytester: pytest.Pytester) 
     result.stdout.fnmatch_lines(["*test_another_failing_file.py::ty FAILED*"])
     result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
     result.stdout.fnmatch_lines(["*:2:18:*invalid-assignment*"])
+    result.stdout.fnmatch_lines(["*ty exited with code*"])
     assert result.ret == 1
 
 
@@ -229,4 +232,15 @@ def test_stable_comment_parsing(pytester: pytest.Pytester) -> None:
 
     result.stdout.fnmatch_lines(["*test_colon_error.py::ty FAILED*"])
     result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
+    assert result.ret == 1
+
+
+@pytest.mark.usefixtures("failing_test", "passing_test")
+def test_status_item_fails_for_uncollected_file_with_errors(pytester: pytest.Pytester) -> None:
+    result = pytester.runpytest("--ty", "-v", "test_passing_file.py")
+
+    result.stdout.fnmatch_lines(["*test_passing_file.py::ty PASSED*"])
+    result.stdout.no_fnmatch_line("*test_failing_file.py::ty*")
+    result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
+    result.stdout.fnmatch_lines(["*test_failing_file*"])
     assert result.ret == 1
