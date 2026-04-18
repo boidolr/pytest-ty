@@ -54,7 +54,7 @@ def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
     try:
         subprocess.run(command, check=True, timeout=60, capture_output=True, cwd=config.rootpath)  # noqa: S603
     except subprocess.CalledProcessError as e:
-        stdout = e.stdout.decode(errors="replace") if e.stdout else "[]"
+        stdout = e.stdout.decode(errors="replace") if e.stdout else "<empty>"
         stderr = e.stderr.decode(errors="replace") if e.stderr else "<empty>"
         results = _parse_ty_output(stdout)
         if not results:
@@ -68,7 +68,7 @@ def _run_ty_once(config: pytest.Config) -> dict[str, list[str]]:
             ]
         )
         if not msg.strip():
-            msg = f"`ty check` timed out after {e.timeout} seconds while running: {' '.join(map(str, command))}"
+            msg = f"`ty check` timed out after {e.timeout} seconds while running: {' '.join(command)}"
         results = {_TY_FAILURE_MARKER: [msg]}
 
     config.stash[_TY_RESULTS_STASH_KEY] = results
@@ -132,7 +132,7 @@ class TyStatusItem(pytest.Item):
     def runtest(self) -> None:
         results = _run_ty_once(self.config)
 
-        if not len(results):
+        if not results:
             return
 
         if _TY_FAILURE_MARKER in results:
