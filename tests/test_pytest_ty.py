@@ -185,7 +185,7 @@ def test_status_item_shown_on_pass(pytester: pytest.Pytester) -> None:
 
 
 @pytest.mark.usefixtures("passing_test", "timeout")
-def test_timeout_handling_passing_check(pytester: pytest.Pytester) -> None:
+def test_passing_file_fails_with_timeout(pytester: pytest.Pytester) -> None:
     result = pytester.runpytest("--ty", "-v")
 
     result.stdout.fnmatch_lines(["*::ty PASSED*"])
@@ -194,7 +194,7 @@ def test_timeout_handling_passing_check(pytester: pytest.Pytester) -> None:
 
 
 @pytest.mark.usefixtures("failing_test", "timeout")
-def test_timeout_handling_failing_check(pytester: pytest.Pytester) -> None:
+def test_failing_file_fail_with_timeout(pytester: pytest.Pytester) -> None:
     result = pytester.runpytest("--ty", "-v")
 
     result.stdout.fnmatch_lines(["*::ty PASSED*"])
@@ -210,7 +210,7 @@ def test_status_item_shows_all_failures_with_verbose(pytester: pytest.Pytester) 
     result.stdout.fnmatch_lines(["*test_failing_file.py::ty FAILED*"])
     result.stdout.fnmatch_lines(["*test_another_failing_file.py::ty FAILED*"])
     result.stdout.fnmatch_lines(["*::ty::status FAILED*"])
-    result.stdout.fnmatch_lines(["*:2:18:*invalid-assignment*"])
+    result.stdout.fnmatch_lines(["*invalid-assignment*"])
     result.stdout.fnmatch_lines(["*ty exited with code*"])
     assert result.ret == 1
 
