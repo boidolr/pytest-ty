@@ -131,6 +131,10 @@ class TyItem(pytest.Item):
 class TyStatusItem(pytest.Item):
     name = "ty::status"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_marker(TyItem.name)
+
     def runtest(self) -> None:
         results = _run_ty_once(self.config)
 
